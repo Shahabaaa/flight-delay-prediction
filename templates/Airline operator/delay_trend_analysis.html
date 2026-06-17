@@ -1,0 +1,546 @@
+{% extends 'Airline operator/homeindex.html' %}
+{% block body %}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-chart-line"></i> 
+                            Delay Trend Analysis - {{ flight.Flight_Name }}
+                        </h4>
+                        <div>
+                            <span class="badge bg-light text-dark me-2">
+                                <i class="fas fa-plane-departure"></i> {{ flight.Source }}
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-plane-arrival"></i> {{ flight.Destination }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Summary Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-database me-2"></i>Total Flights</h6>
+                                    <h3>{{ stats.total_flights }}</h3>
+                                    <small>Analyzed records</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-check-circle me-2"></i>On-Time Both</h6>
+                                    <h3>{{ stats.on_time_both_pct|floatformat:1 }}%</h3>
+                                    <small>Departure & Arrival</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-clock me-2"></i>Avg Delay</h6>
+                                    <h3>{{ stats.avg_dep_delay|floatformat:1 }} / {{ stats.avg_arr_delay|floatformat:1 }}</h3>
+                                    <small>Dep / Arr (min)</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-chart-bar me-2"></i>Trend</h6>
+                                    <h3>{{ stats.delay_trend }}</h3>
+                                    <small>Volatility: {{ stats.volatility }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Second Row Stats -->
+                    <div class="row mb-4">
+                        <div class="col-md-2">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Early</h6>
+                                    <h4>{{ stats.early_dep }}</h4>
+                                    <small>flights</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>On Time</h6>
+                                    <h4>{{ stats.on_time_dep }}</h4>
+                                    <small>±5 min</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Minor</h6>
+                                    <h4>{{ stats.minor_dep }}</h4>
+                                    <small>5-15 min</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Moderate</h6>
+                                    <h4>{{ stats.moderate_dep }}</h4>
+                                    <small>15-30 min</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Severe</h6>
+                                    <h4>{{ stats.severe_dep }}</h4>
+                                    <small>>30 min</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Total Delay</h6>
+                                    <h4>{{ stats.total_dep_delay_minutes|floatformat:0 }}</h4>
+                                    <small>minutes</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation Tabs -->
+                    <ul class="nav nav-tabs mb-4" id="analysisTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="trend-tab" data-bs-toggle="tab" href="#trend" role="tab">
+                                <i class="fas fa-chart-line"></i> Trend Over Time
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="weekday-tab" data-bs-toggle="tab" href="#weekday" role="tab">
+                                <i class="fas fa-calendar-week"></i> Day of Week
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="monthly-tab" data-bs-toggle="tab" href="#monthly" role="tab">
+                                <i class="fas fa-calendar-alt"></i> Monthly Trend
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="distribution-tab" data-bs-toggle="tab" href="#distribution" role="tab">
+                                <i class="fas fa-chart-bar"></i> Distribution
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="cumulative-tab" data-bs-toggle="tab" href="#cumulative" role="tab">
+                                <i class="fas fa-chart-pie"></i> Cumulative
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <!-- Tab Content -->
+                    <div class="tab-content mb-4">
+                        <!-- Trend Graph -->
+                        <div class="tab-pane fade show active" id="trend" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5>Delay Trend Over Time</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ trend_graph }}" class="img-fluid rounded" alt="Trend Graph" style="max-height: 500px;">
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <div class="alert alert-success">
+                                                <strong>Best Performance:</strong><br>
+                                                {{ dates.0|date:"d M Y" }}<br>
+                                                <small>{{ stats.min_dep_delay|floatformat:1 }} min delay</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="alert alert-warning">
+                                                <strong>Average:</strong><br>
+                                                {{ stats.avg_dep_delay|floatformat:1 }} min (Dep)<br>
+                                                {{ stats.avg_arr_delay|floatformat:1 }} min (Arr)
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="alert alert-danger">
+                                                <strong>Worst Performance:</strong><br>
+                                                {{ dates.last|date:"d M Y" }}<br>
+                                                <small>{{ stats.max_dep_delay|floatformat:1 }} min delay</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Weekday Graph -->
+                        <div class="tab-pane fade" id="weekday" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5>Delay Analysis by Day of Week</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ weekday_graph }}" class="img-fluid rounded" alt="Weekday Graph" style="max-height: 500px;">
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <div class="alert alert-success">
+                                                <i class="fas fa-thumbs-up"></i> <strong>Best Day to Fly:</strong> {{ stats.best_weekday }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="alert alert-danger">
+                                                <i class="fas fa-exclamation-triangle"></i> <strong>Worst Day to Fly:</strong> {{ stats.worst_weekday }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hourly Graph -->
+                        <div class="tab-pane fade" id="hourly" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5>Delay Analysis by Hour of Day</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ hourly_graph }}" class="img-fluid rounded" alt="Hourly Graph" style="max-height: 500px;">
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <div class="alert alert-warning">
+                                                <strong>Peak Delay Hour:</strong> {{ stats.peak_hour }}:00 - {{ stats.peak_hour|add:"1" }}:00
+                                                ({% if stats.peak_hour < 12 %}{{ stats.peak_hour }}:00 AM{% elif stats.peak_hour == 12 %}12:00 PM{% else %}{{ stats.peak_hour|add:"-12" }}:00 PM{% endif %})
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Monthly Graph -->
+                        <div class="tab-pane fade" id="monthly" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5>Monthly Delay Trend</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ monthly_graph }}" class="img-fluid rounded" alt="Monthly Graph" style="max-height: 500px;">
+                                    <p class="mt-2 text-muted">Monthly average delays show seasonal patterns</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Distribution Graph -->
+                        <div class="tab-pane fade" id="distribution" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5>Delay Distribution Analysis</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ distribution_graph }}" class="img-fluid rounded" alt="Distribution Graph" style="max-height: 500px;">
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <div class="alert alert-info">
+                                                <strong>Departure:</strong> Range [{{ stats.min_dep_delay|floatformat:0 }}, {{ stats.max_dep_delay|floatformat:0 }}] min
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="alert alert-info">
+                                                <strong>Arrival:</strong> Range [{{ stats.min_arr_delay|floatformat:0 }}, {{ stats.max_arr_delay|floatformat:0 }}] min
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cumulative Graph -->
+                        <div class="tab-pane fade" id="cumulative" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5>Cumulative Delay Analysis</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ cumulative_graph }}" class="img-fluid rounded" alt="Cumulative Graph" style="max-height: 500px;">
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <div class="alert alert-danger">
+                                                <strong>Total Delay Accumulated:</strong>
+                                                {{ stats.total_dep_delay_minutes|floatformat:0 }} minutes departure,
+                                                {{ stats.total_arr_delay_minutes|floatformat:0 }} minutes arrival
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Data Table - CORRECTED VERSION -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5><i class="fas fa-table"></i> Recent Flight Delay Details (Last 20 Flights)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover" id="delayTable">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Date</th>
+                                                    <th>Day</th>
+                                                    <th>Departure Delay</th>
+                                                    <th>Arrival Delay</th>
+                                                    <th>Status (Dep)</th>
+                                                    <th>Status (Arr)</th>
+                                                    <th>Impact</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for i in date_range %}
+                                                    {% with index=forloop.counter0 %}
+                                                    <tr>
+                                                        <td>{{ forloop.revcounter }}</td>
+                                                        <td>{{ dates|slice:forloop.counter|last|date:"d M Y" }}</td>
+                                                        <td>{{ dates|slice:forloop.counter|last|date:"l" }}</td>
+                                                        <td class="{% if dep_delays|slice:forloop.counter|last > 30 %}text-danger{% elif dep_delays|slice:forloop.counter|last > 15 %}text-warning{% else %}text-success{% endif %} fw-bold">
+                                                            {{ dep_delays|slice:forloop.counter|last|floatformat:1 }} min
+                                                        </td>
+                                                        <td class="{% if arr_delays|slice:forloop.counter|last > 30 %}text-danger{% elif arr_delays|slice:forloop.counter|last > 15 %}text-warning{% else %}text-success{% endif %} fw-bold">
+                                                            {{ arr_delays|slice:forloop.counter|last|floatformat:1 }} min
+                                                        </td>
+                                                        <td>
+                                                            {% with delay=dep_delays|slice:forloop.counter|last %}
+                                                                {% if delay > 30 %}
+                                                                    <span class="badge bg-danger">Severe</span>
+                                                                {% elif delay > 15 %}
+                                                                    <span class="badge bg-warning">Moderate</span>
+                                                                {% elif delay > 5 %}
+                                                                    <span class="badge bg-info">Minor</span>
+                                                                {% elif delay < -5 %}
+                                                                    <span class="badge bg-primary">Early</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-success">On Time</span>
+                                                                {% endif %}
+                                                            {% endwith %}
+                                                        </td>
+                                                        <td>
+                                                            {% with delay=arr_delays|slice:forloop.counter|last %}
+                                                                {% if delay > 30 %}
+                                                                    <span class="badge bg-danger">Severe</span>
+                                                                {% elif delay > 15 %}
+                                                                    <span class="badge bg-warning">Moderate</span>
+                                                                {% elif delay > 5 %}
+                                                                    <span class="badge bg-info">Minor</span>
+                                                                {% elif delay < -5 %}
+                                                                    <span class="badge bg-primary">Early</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-success">On Time</span>
+                                                                {% endif %}
+                                                            {% endwith %}
+                                                        </td>
+                                                        <td>
+                                                            {% with dep=dep_delays|slice:forloop.counter|last arr=arr_delays|slice:forloop.counter|last %}
+                                                                {% with total=dep|add:arr %}
+                                                                    {% if total > 60 %}
+                                                                        <span class="badge bg-danger">High Impact</span>
+                                                                    {% elif total > 30 %}
+                                                                        <span class="badge bg-warning">Medium Impact</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-success">Low Impact</span>
+                                                                    {% endif %}
+                                                                {% endwith %}
+                                                            {% endwith %}
+                                                        </td>
+                                                    </tr>
+                                                    {% endwith %}
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Insights Section -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5><i class="fas fa-lightbulb"></i> Key Insights & Recommendations</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="card mb-3">
+                                                <div class="card-header bg-primary text-white">📊 Pattern Analysis</div>
+                                                <div class="card-body">
+                                                    <ul class="list-unstyled">
+                                                        <li><i class="fas fa-arrow-right text-primary"></i> <strong>Trend:</strong> {{ stats.delay_trend }}</li>
+                                                        <li><i class="fas fa-arrow-right text-primary"></i> <strong>Volatility:</strong> {{ stats.volatility }} (Std: {{ stats.std_dep_delay|floatformat:1 }})</li>
+                                                        <li><i class="fas fa-arrow-right text-primary"></i> <strong>Worst Day:</strong> {{ stats.worst_weekday }}</li>
+                                                        <li><i class="fas fa-arrow-right text-primary"></i> <strong>Peak Hour:</strong> {{ stats.peak_hour }}:00</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card mb-3">
+                                                <div class="card-header bg-success text-white">✅ Recommendations</div>
+                                                <div class="card-body">
+                                                    <ul class="list-unstyled">
+                                                        <li><i class="fas fa-check-circle text-success"></i> Avoid {{ stats.worst_weekday }} flights</li>
+                                                        <li><i class="fas fa-check-circle text-success"></i> Best to fly on {{ stats.best_weekday }}</li>
+                                                        <li><i class="fas fa-check-circle text-success"></i> Avoid {{ stats.peak_hour }}:00 departures</li>
+                                                        <li><i class="fas fa-check-circle text-success"></i> Allow extra time on peak days</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card mb-3">
+                                                <div class="card-header bg-warning text-dark">⚠️ Risk Factors</div>
+                                                <div class="card-body">
+                                                    <ul class="list-unstyled">
+                                                        <li><i class="fas fa-exclamation-triangle text-warning"></i> {{ stats.severe_dep }} severe delays (>30 min)</li>
+                                                        <li><i class="fas fa-exclamation-triangle text-warning"></i> {{ stats.moderate_dep }} moderate delays</li>
+                                                        <li><i class="fas fa-exclamation-triangle text-warning"></i> {{ stats.early_dep }} early departures</li>
+                                                        <li><i class="fas fa-exclamation-triangle text-warning"></i> {{ stats.on_time_dep }} on-time flights</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <a href="/myapp/delay_prediction/{{ flight.id }}" class="btn btn-info">
+                                <i class="fas fa-robot"></i> View Predictions
+                            </a>
+                            <a href="/myapp/viewflightschedules/{{ flight.id }}" class="btn btn-success">
+                                <i class="fas fa-calendar-alt"></i> View Schedules
+                            </a>
+                            <a href="/myapp/view_flights" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Flights
+                            </a>
+                            <button onclick="window.print()" class="btn btn-primary">
+                                <i class="fas fa-print"></i> Print Report
+                            </button>
+                            <a href="/myapp/delay_trend_analysis/{{ flight.id }}" class="btn btn-warning">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        margin-bottom: 20px;
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+        font-weight: 600;
+    }
+    .badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 5px 10px;
+    }
+    .table th {
+        background-color: #343a40;
+        color: white;
+        font-weight: 500;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+    .nav-tabs .nav-link {
+        font-weight: 500;
+        color: #495057;
+        padding: 10px 15px;
+    }
+    .nav-tabs .nav-link.active {
+        color: #007bff;
+        font-weight: 600;
+        border-bottom: 3px solid #007bff;
+    }
+    .list-unstyled li {
+        margin-bottom: 8px;
+    }
+    .btn {
+        margin-right: 10px;
+        border-radius: 5px;
+        padding: 8px 20px;
+    }
+    @media print {
+        .btn, .nav-tabs, .alert-dismissible {
+            display: none !important;
+        }
+    }
+</style>
+
+<!-- Add DataTables for better table interaction -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $('#delayTable').DataTable({
+            pageLength: 10,
+            order: [[1, 'desc']], // Sort by date descending
+            language: {
+                search: "Search records:",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries"
+            }
+        });
+    });
+</script>
+
+<!-- Add Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+{% endblock %}

@@ -1,0 +1,451 @@
+{% extends 'authority/homeindex.html' %}
+{% block body %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Breadcrumb Navigation -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/myapp/home/">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">My Profile</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-4 col-lg-5">
+            <!-- Profile Card -->
+            <div class="card shadow mb-4">
+                <div class="card-body text-center">
+                    <!-- Profile Image with Upload Overlay -->
+                    <div class="position-relative d-inline-block mb-4">
+                        <div class="avatar-wrapper">
+                            {% if data.Photo %}
+                                <img src="{{ data.Photo }}" alt="Profile" class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #4e73df;">
+                            {% else %}
+                                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white mx-auto" style="width: 150px; height: 150px; font-size: 48px; border: 4px solid #4e73df;">
+                                    {{ data.Full_Name|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Online Status Badge -->
+                        <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-2 border border-2 border-white" style="width: 20px; height: 20px;"></span>
+                    </div>
+
+                    <!-- User Info -->
+                    <h4 class="fw-bold">{{ data.Full_Name }}</h4>
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-envelope me-2"></i>{{ data.Email }}
+                    </p>
+
+                    <!-- Role Badge -->
+                    <span class="badge bg-primary px-4 py-2 mb-3">
+                        <i class="fas fa-user-tie me-2"></i>Authority Member
+                    </span>
+
+                    <!-- Stats Row -->
+                    <div class="row mt-3">
+
+                        <div class="col-12">
+                            <div>
+                                <h5 class="fw-bold mb-1">{{ years_exp|default:"5" }}</h5>
+                                <small class="text-muted">Years</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <!-- Contact Info Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-address-card me-2"></i>Contact Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1">Phone Number</label>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-phone text-primary me-2"></i>
+                            <span>{{ data.Phone }}</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1">Email Address</label>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            <span>{{ data.Email }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-muted small mb-1">Full Address</label>
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-map-marker-alt text-primary me-2 mt-1"></i>
+                            <span>
+                                {{ data.Place }}, {{ data.City }}<br>
+                                {{ data.District }}, {{ data.State }} - {{ data.Pincode }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Detailed Information -->
+        <div class="col-xl-8 col-lg-7">
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Personal Information Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-user-circle me-2"></i>Personal Information
+                    </h6>
+                    <span class="badge bg-info">Last updated: {{ data.last_updated|default:"Today" }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="info-card p-3 bg-light rounded">
+                                <label class="text-muted small mb-1">Full Name</label>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user text-primary me-2"></i>
+                                    <h6 class="mb-0 fw-bold">{{ data.Full_Name }}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-card p-3 bg-light rounded">
+                                <label class="text-muted small mb-1">Gender</label>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-venus-mars text-primary me-2"></i>
+                                    <h6 class="mb-0">
+                                        {% if data.gender == 'M' %}
+                                            Male
+                                        {% elif data.gender == 'F' %}
+                                            Female
+                                        {% else %}
+                                            {{ data.gender }}
+                                        {% endif %}
+                                    </h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-card p-3 bg-light rounded">
+                                <label class="text-muted small mb-1">Date of Birth</label>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-birthday-cake text-primary me-2"></i>
+                                    <h6 class="mb-0">{{ data.DOB|date:"d F, Y" }}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-card p-3 bg-light rounded">
+                                <label class="text-muted small mb-1">Age</label>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                    <h6 class="mb-0">{{ data.age|default:"30" }} years</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address Information Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-home me-2"></i>Address Details
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="border-start border-3 border-primary ps-3">
+                                <label class="text-muted small">Place</label>
+                                <h6 class="mb-0">{{ data.Place }}</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-start border-3 border-success ps-3">
+                                <label class="text-muted small">City</label>
+                                <h6 class="mb-0">{{ data.City }}</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-start border-3 border-info ps-3">
+                                <label class="text-muted small">District</label>
+                                <h6 class="mb-0">{{ data.District }}</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-start border-3 border-warning ps-3">
+                                <label class="text-muted small">State</label>
+                                <h6 class="mb-0">{{ data.State }}</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-start border-3 border-danger ps-3">
+                                <label class="text-muted small">Post</label>
+                                <h6 class="mb-0">{{ data.Post }}</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-start border-3 border-secondary ps-3">
+                                <label class="text-muted small">Pincode</label>
+                                <h6 class="mb-0">{{ data.Pincode }}</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-file-alt me-2"></i>Verification Documents
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <i class="fas fa-id-card fa-3x text-primary mb-3"></i>
+                                <h6>Photo</h6>
+                                {% if data.Photo %}
+                                    <img src="{{ data.Photo }}" alt="Profile Photo" class="img-thumbnail mb-2" style="max-height: 100px;">
+                                    <div>
+                                        <span class="badge bg-success">Verified</span>
+                                        <a href="{{ data.Photo }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No photo uploaded</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                                <h6>Proof Document</h6>
+                                {% if data.Proof %}
+                                    <img src="{{ data.Proof }}" alt="Proof Document" class="img-thumbnail mb-2" style="max-height: 100px;">
+                                    <div>
+                                        <span class="badge bg-success">Verified</span>
+                                        <a href="{{ data.Proof }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No document uploaded</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Profile
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/myapp/update_profile/" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" name="full_name" class="form-control" value="{{ data.Full_Name }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" value="{{ data.Email }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" class="form-control" value="{{ data.Phone }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" name="dob" class="form-control" value="{{ data.DOB|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Gender</label>
+                            <select name="gender" class="form-select">
+                                <option value="M" {% if data.gender == 'M' %}selected{% endif %}>Male</option>
+                                <option value="F" {% if data.gender == 'F' %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if data.gender == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Place</label>
+                            <input type="text" name="place" class="form-control" value="{{ data.Place }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">City</label>
+                            <input type="text" name="city" class="form-control" value="{{ data.City }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">District</label>
+                            <input type="text" name="district" class="form-control" value="{{ data.District }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">State</label>
+                            <input type="text" name="state" class="form-control" value="{{ data.State }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Post</label>
+                            <input type="text" name="post" class="form-control" value="{{ data.Post }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Pincode</label>
+                            <input type="text" name="pincode" class="form-control" value="{{ data.Pincode }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Update Photo</label>
+                            <input type="file" name="photo" class="form-control" accept="image/*">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Update Proof</label>
+                            <input type="file" name="proof" class="form-control" accept="image/*,application/pdf">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+    .avatar-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .avatar-upload {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: #4e73df;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 2px solid white;
+        transition: all 0.3s;
+    }
+
+    .avatar-upload:hover {
+        background: #224abe;
+        transform: scale(1.1);
+    }
+
+    .info-card {
+        transition: all 0.3s;
+    }
+
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .timeline-item {
+        position: relative;
+        border-left: 2px solid #e3e6f0;
+        padding-left: 20px;
+        margin-left: 10px;
+    }
+
+    .timeline-item:last-child {
+        border-left-color: transparent;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -7px;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+    }
+
+    .breadcrumb-item a {
+        color: #4e73df;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+        color: #858796;
+    }
+
+    .border-start {
+        transition: all 0.3s;
+    }
+
+    .border-start:hover {
+        transform: translateX(5px);
+    }
+
+    @media print {
+        .btn, .modal, .card-footer, .breadcrumb {
+            display: none !important;
+        }
+
+        .card {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}

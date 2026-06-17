@@ -1,0 +1,294 @@
+{% extends 'Airline operator/homeindex.html' %}
+{% block body %}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-chart-line"></i> 
+                            Flight Delay Prediction - {{ flight.Flight_Name }}
+                        </h4>
+                        <div>
+                            <span class="badge bg-light text-dark me-2">
+                                <i class="fas fa-plane-departure"></i> {{ flight.Source }}
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-plane-arrival"></i> {{ flight.Destination }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-database me-2"></i>Historical Data</h6>
+                                    <h3>{{ total_records }}</h3>
+                                    <small>Flight records</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-check-circle me-2"></i>On-Time Performance</h6>
+                                    <h3>{{ on_time_percentage }}%</h3>
+                                    <small>Delays &#60; 15 min</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-clock me-2"></i>Avg Departure Delay</h6>
+                                    <h3>{{ avg_dep_delay }} <small style="font-size: 14px;">min</small></h3>
+                                    <small>Historical average</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-calendar-alt me-2"></i>Future Forecast</h6>
+                                    <h3>{{ future_predictions|length }}</h3>
+                                    <small>Next 7 days</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Model Status -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert {% if has_model %}alert-success{% else %}alert-warning{% endif %}">
+                                <i class="fas {% if has_model %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %} me-2"></i>
+                                {% if has_model %}
+                                    <strong>LSTM Model Status:</strong> Active - Predicting future flights based on {{ total_records }} historical records
+                                {% else %}
+                                    <strong>Insufficient Data:</strong> Need at least 10 flight records for LSTM training (Current: {{ total_records }})
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graph Section -->
+                    {% if graph %}
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-chart-bar"></i>
+                                            Delay Analysis & Future Predictions
+                                        </h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <img src="data:image/png;base64,{{ graph }}" class="img-fluid rounded" alt="Delay Prediction Graph" style="max-height: 500px;">
+                                        <div class="mt-3">
+                                            <span class="badge bg-primary me-2">Historical Departure</span>
+                                            <span class="badge bg-success me-2">Historical Arrival</span>
+                                            <span class="badge bg-light text-dark border me-2">Predicted Departure</span>
+                                            <span class="badge bg-light text-dark border">Predicted Arrival</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Future Predictions Table -->
+                    {% if future_predictions %}
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            🔮 FUTURE FLIGHT PREDICTIONS - Next 7 Days
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover">
+                                                <thead class="table-dark">
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Day</th>
+                                                        <th>Scheduled Departure</th>
+                                                        <th>Scheduled Arrival</th>
+                                                        <th>Predicted Departure</th>
+                                                        <th>Predicted Arrival</th>
+                                                        <th>Departure Delay</th>
+                                                        <th>Arrival Delay</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for pred in future_predictions %}
+                                                    <tr class="{% if pred.date == today %}table-info{% endif %}">
+                                                        <td><strong>{{ pred.date|date:"d M Y" }}</strong></td>
+                                                        <td>{{ pred.day }}</td>
+                                                        <td>{{ pred.scheduled_dep }}</td>
+                                                        <td>{{ pred.scheduled_arr }}</td>
+                                                        <td class="text-primary fw-bold">{{ pred.pred_dep_time }}</td>
+                                                        <td class="text-success fw-bold">{{ pred.pred_arr_time }}</td>
+                                                        <td>
+                                                            <span class="badge {% if pred.pred_dep_delay > 30 %}bg-danger{% elif pred.pred_dep_delay > 15 %}bg-warning{% else %}bg-success{% endif %} p-2">
+                                                                {{ pred.pred_dep_delay }} min
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge {% if pred.pred_arr_delay > 30 %}bg-danger{% elif pred.pred_arr_delay > 15 %}bg-warning{% else %}bg-success{% endif %} p-2">
+                                                                {{ pred.pred_arr_delay }} min
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            {% if pred.pred_dep_delay > 30 or pred.pred_arr_delay > 30 %}
+                                                                <span class="badge bg-danger p-2">Critical Delay</span>
+                                                            {% elif pred.pred_dep_delay > 15 or pred.pred_arr_delay > 15 %}
+                                                                <span class="badge bg-warning p-2">Moderate Delay</span>
+                                                            {% else %}
+                                                                <span class="badge bg-success p-2">On Time</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Historical Predictions Table -->
+                    {% if historical_predictions %}
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-history"></i>
+                                            Recent Historical Flights (Model Validation)
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover">
+                                                <thead class="table-dark">
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Scheduled</th>
+                                                        <th>Actual</th>
+                                                        <th>Predicted</th>
+                                                        <th>Delay (Actual/Pred)</th>
+                                                        <th>Accuracy</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for pred in historical_predictions %}
+                                                    <tr>
+                                                        <td>{{ pred.date|date:"d M" }}</td>
+                                                        <td>{{ pred.scheduled_dep }} → {{ pred.scheduled_arr }}</td>
+                                                        <td>{{ pred.actual_dep_time }} → {{ pred.actual_arr_time }}</td>
+                                                        <td class="text-primary">{{ pred.pred_dep_time }} → {{ pred.pred_arr_time }}</td>
+                                                        <td>
+                                                            Act: {{ pred.actual_dep_time|slice:":5" }} /
+                                                            Pred: {{ pred.pred_dep_time }}<br>
+                                                            <small>Diff:
+                                                                {% with diff=pred.pred_dep_delay %}
+                                                                    {% if diff < 5 %}
+                                                                        <span class="text-success">Very close</span>
+                                                                    {% elif diff < 10 %}
+                                                                        <span class="text-warning">Moderate</span>
+                                                                    {% else %}
+                                                                        <span class="text-danger">Off</span>
+                                                                    {% endif %}
+                                                                {% endwith %}
+                                                            </small>
+                                                        </td>
+                                                        <td>
+                                                            <div class="progress">
+                                                                {% with accuracy=100|add:pred.pred_dep_delay|add:pred.pred_arr_delay|divisibleby:2 %}
+                                                                <div class="progress-bar {% if accuracy > 80 %}bg-success{% elif accuracy > 60 %}bg-warning{% else %}bg-danger{% endif %}"
+                                                                     style="width: {{ accuracy }}%">
+                                                                    {{ accuracy }}%
+                                                                </div>
+                                                                {% endwith %}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <a href="/myapp/viewflightschedules/{{ flight.id }}" class="btn btn-info">
+                                <i class="fas fa-calendar-alt"></i> View All Schedules
+                            </a>
+                            <a href="/myapp/view_flights" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Flights
+                            </a>
+                            <button onclick="location.reload()" class="btn btn-primary">
+                                <i class="fas fa-sync-alt"></i> Refresh Predictions
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        margin-bottom: 20px;
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+        font-weight: 600;
+    }
+    .badge {
+        font-size: 13px;
+        font-weight: 500;
+    }
+    .table th {
+        background-color: #343a40;
+        color: white;
+        font-weight: 500;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+    .progress {
+        height: 20px;
+    }
+    .border-warning {
+        border: 2px solid #ffc107 !important;
+    }
+</style>
+
+<!-- Add Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+{% endblock %}

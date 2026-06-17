@@ -1,0 +1,101 @@
+{#<!DOCTYPE html>#}
+{#<html lang="en">#}
+{#<head>#}
+{#  <meta charset="UTF-8">#}
+{#  <title>Registration Data Table</title>#}
+{#  <!-- Bootstrap CSS -->#}
+{#  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">#}
+{#  <!-- DataTables CSS -->#}
+{#  <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">#}
+{#</head>#}
+{#<body>#}
+{% extends 'Admin/home_index.html' %}
+{% block body %}
+
+    <!-- Date Filter Inputs -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label for="fromDate" class="form-label">From Date</label>
+        <input type="date" id="fromDate" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label for="toDate" class="form-label">To Date</label>
+        <input type="date" id="toDate" class="form-control">
+      </div>
+    </div>
+
+  <div class="container mt-5">
+    <h2 class="mb-4">Registered Users</h2>
+    <table id="complaintTable" class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date</th>
+          <th>Complaint</th>
+          <th>Passenger</th>
+            <th>Reply</th>
+        </tr>
+      </thead>
+      <tbody>
+     {% for i in data %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ i.Date }}</td>
+          <td>{{ i.Complaint }}</td>
+          <td>{{ i.PASSENGER.Name }}</td>
+                  <td>
+                      {% if i.Status == "Pending" %}
+                      <a href="/myapp/sendreply/{{ i.id }}" class="btn btn-success">Reply</a>
+                      {% else %}
+                      {{ i.Reply }}
+                  {% endif %}
+                  </td>
+
+        </tr>  <!-- Sample Data Row -->
+
+        {% endfor %}
+        <!-- Add more rows dynamically from backend -->
+      </tbody>
+    </table>
+  </div>
+  <!-- Scripts -->
+ <!-- Scripts -->
+{#  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>#}
+{#  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>#}
+{#  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>#}
+{##}
+{% block scripts %}
+  <script>
+    // Extend DataTables with custom date filtering
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+      const min = document.getElementById('fromDate').value;
+      const max = document.getElementById('toDate').value;
+      const dateStr = data[1]; // Date is column index 1
+      const date = new Date(dateStr);
+
+      const minDate = min ? new Date(min) : null;
+      const maxDate = max ? new Date(max) : null;
+
+      if ((!minDate || date >= minDate) && (!maxDate || date <= maxDate)) {
+        return true;
+      }
+      return false;
+    });
+
+    // Initialize DataTable and bind filter events
+    $(document).ready(function () {
+      const table = $('#complaintTable').DataTable({
+        pageLength: 5
+      });
+
+      $('#fromDate, #toDate').on('change', function () {
+        table.draw();
+      });
+    });
+  </script>
+{% endblock %}
+{%  endblock %}
+
+{##}
+{#</body>#}
+{#</html>#}

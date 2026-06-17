@@ -1,0 +1,488 @@
+{% extends 'authority/homeindex.html' %}
+{% block body %}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-building"></i>
+                            Airport Congestion & Performance Dashboard
+                        </h4>
+                        <div>
+                            <span class="badge bg-light text-dark me-2">
+                                <i class="fas fa-plane"></i> {{ total_airports }} Airports
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-chart-line"></i> {{ total_flights }} Total Flights
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Summary Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-chart-line me-2"></i>Avg Performance</h6>
+                                    <h3>{{ avg_performance }}%</h3>
+                                    <small>Overall airport score</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-star me-2"></i>Excellent</h6>
+                                    <h3>{{ excellent_count }}</h3>
+                                    <small>Airports (80+ score)</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-exclamation-triangle me-2"></i>Fair/Poor</h6>
+                                    <h3>{{ fair_count|add:poor_count }}</h3>
+                                    <small>Need improvement</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase"><i class="fas fa-clock me-2"></i>Peak Hour</h6>
+                                    <h3>{{ global_peak_hour }}</h3>
+                                    <small>{{ global_peak_count }} flights</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Second Row Stats -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <h6>Total Departures</h6>
+                                    <h2>{{ total_departures }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <h6>Total Arrivals</h6>
+                                    <h2>{{ total_arrivals }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <h6>Daily Average</h6>
+                                    <h2>{% widthratio total_flights 7 1 %}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Tabs -->
+                    <ul class="nav nav-tabs mb-4" id="airportTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="hourly-tab" data-bs-toggle="tab" href="#hourly" role="tab">
+                                <i class="fas fa-clock"></i> Hourly Congestion
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="daily-tab" data-bs-toggle="tab" href="#daily" role="tab">
+                                <i class="fas fa-calendar-week"></i> Daily Congestion
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="busiest-tab" data-bs-toggle="tab" href="#busiest" role="tab">
+                                <i class="fas fa-chart-bar"></i> Busiest Airports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="delay-tab" data-bs-toggle="tab" href="#delay" role="tab">
+                                <i class="fas fa-exclamation-triangle"></i> Delay Analysis
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content mb-4">
+                        <!-- Hourly Graph -->
+                        <div class="tab-pane fade show active" id="hourly" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5>Overall Airport Congestion by Hour</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ hourly_graph }}" class="img-fluid rounded" alt="Hourly Graph">
+                                    <p class="mt-2 text-muted">Peak congestion at <strong>{{ global_peak_hour }}</strong> with {{ global_peak_count }} flights</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Daily Graph -->
+                        <div class="tab-pane fade" id="daily" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5>Overall Airport Congestion by Day</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ daily_graph }}" class="img-fluid rounded" alt="Daily Graph">
+                                    <p class="mt-2 text-muted">Friday and Saturday show highest congestion</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Busiest Airports Graph -->
+                        <div class="tab-pane fade" id="busiest" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5>Top 10 Busiest Airports by Flight Volume</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ busiest_graph }}" class="img-fluid rounded" alt="Busiest Graph">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delay Analysis Graph -->
+                        <div class="tab-pane fade" id="delay" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5>Top 8 Airports by Delay Percentage</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="data:image/png;base64,{{ delay_pct_graph }}" class="img-fluid rounded" alt="Delay Graph">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Airport Statistics Table -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5><i class="fas fa-table me-2"></i>Airport Congestion & Performance Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover" id="airportTable">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Airport</th>
+                                                    <th>Total Flights</th>
+                                                    <th>Departures</th>
+                                                    <th>Arrivals</th>
+                                                    <th>Delay % (Dep/Arr)</th>
+                                                    <th>Avg Delay (Dep/Arr)</th>
+                                                    <th>Severe % (Dep/Arr)</th>
+                                                    <th>Performance</th>
+                                                    <th>Congestion</th>
+                                                    <th>Busiest Day</th>
+                                                    <th>Peak Hours</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for airport in airport_list %}
+                                                <tr>
+                                                    <td>{{ forloop.counter }}</td>
+                                                    <td>{{ airport.name }}</td>
+                                                    <td><strong>{{ airport.total_flights }}</strong></td>
+                                                    <td>{{ airport.departures }}</td>
+                                                    <td>{{ airport.arrivals }}</td>
+                                                    <td>
+                                                        <div class="progress mb-1" style="height: 10px;">
+                                                            <div class="progress-bar bg-danger" style="width: {{ airport.dep_delay_pct }}%"></div>
+                                                        </div>
+                                                        <small>Dep: {{ airport.dep_delay_pct }}%</small>
+                                                        <div class="progress mt-1" style="height: 10px;">
+                                                            <div class="progress-bar bg-warning" style="width: {{ airport.arr_delay_pct }}%"></div>
+                                                        </div>
+                                                        <small>Arr: {{ airport.arr_delay_pct }}%</small>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-primary">{{ airport.avg_dep_delay }} min</span><br>
+                                                        <span class="badge bg-warning mt-1">{{ airport.avg_arr_delay }} min</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-danger">{{ airport.severe_dep_pct }}%</span><br>
+                                                        <span class="badge bg-danger mt-1">{{ airport.severe_arr_pct }}%</span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="progress mb-1" style="height: 15px;">
+                                                            <div class="progress-bar bg-{{ airport.perf_color }}"
+                                                                 style="width: {{ airport.performance_score }}%">
+                                                                {{ airport.performance_score }}
+                                                            </div>
+                                                        </div>
+                                                        <span class="badge bg-{{ airport.perf_color }}">{{ airport.performance_rating }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-{{ airport.congestion_color }}">{{ airport.congestion_level }}</span>
+                                                    </td>
+                                                    <td>{{ airport.busiest_day }}</td>
+                                                    <td><small>{{ airport.peak_hours }}</small></td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Insights -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-header bg-info text-white">
+                                    <h5><i class="fas fa-chart-line"></i> Congestion Insights</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Busiest hour overall
+                                            <span class="badge bg-danger rounded-pill">{{ global_peak_hour }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Busiest day
+                                            <span class="badge bg-warning rounded-pill">Friday</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Average delay rate
+                                            <span class="badge bg-info rounded-pill">{{ avg_performance|floatformat:0 }}%</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Airports needing attention
+                                            <span class="badge bg-danger rounded-pill">{{ poor_count }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-header bg-success text-white">
+                                    <h5><i class="fas fa-lightbulb"></i> Recommendations</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        <li class="list-group-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            Avoid scheduling flights during peak hour ({{ global_peak_hour }})
+                                        </li>
+                                        <li class="list-group-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            Add buffer time on Fridays for better performance
+                                        </li>
+                                        <li class="list-group-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            Monitor airports with >40% delay rate
+                                        </li>
+                                        <li class="list-group-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            Consider additional staff during peak congestion
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        margin-bottom: 20px;
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+        font-weight: 600;
+    }
+    .badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 5px 10px;
+    }
+    .table th {
+        background-color: #343a40;
+        color: white;
+        font-weight: 500;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+    .nav-tabs .nav-link {
+        font-weight: 500;
+        color: #495057;
+    }
+    .nav-tabs .nav-link.active {
+        color: #007bff;
+        font-weight: 600;
+        border-bottom: 3px solid #007bff;
+    }
+    .progress {
+        border-radius: 5px;
+    }
+    .btn {
+        margin-right: 8px;
+        border-radius: 5px;
+        padding: 8px 16px;
+    }
+    .border-primary {
+        border: 2px solid #007bff !important;
+    }
+    .border-success {
+        border: 2px solid #28a745 !important;
+    }
+    .border-warning {
+        border: 2px solid #ffc107 !important;
+    }
+</style>
+
+{% block scripts %}
+<!-- Add DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- Add JavaScript libraries -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Safe DataTable initialization with proper checks
+        setTimeout(function() {
+            if ($('#airportTable').length) {
+                try {
+                    // Check if DataTable is already initialized
+                    if (!$.fn.DataTable.isDataTable('#airportTable')) {
+                        $('#airportTable').DataTable({
+                            pageLength: 10,
+                            order: [[2, 'desc']], // Sort by total flights
+                            searching: true,
+                            paging: true,
+                            info: true,
+                            language: {
+                                search: "Search airports:",
+                                lengthMenu: "Show _MENU_ entries",
+                                info: "Showing _START_ to _END_ of _TOTAL_ airports",
+                                infoEmpty: "Showing 0 to 0 of 0 airports",
+                                infoFiltered: "(filtered from _MAX_ total airports)"
+                            },
+                            "drawCallback": function(settings) {
+                                console.log('Airport table DataTable drawn successfully');
+                            },
+                            "initComplete": function(settings, json) {
+                                console.log('Airport table DataTable initialization complete');
+                            }
+                        });
+                        console.log('Airport table DataTable initialized successfully');
+                    } else {
+                        console.log('Airport table DataTable already initialized - skipping');
+                    }
+                } catch (error) {
+                    console.error('Airport table DataTable initialization error:', error);
+                    // Fallback: try to reinitialize with destroy option
+                    try {
+                        if ($.fn.DataTable.isDataTable('#airportTable')) {
+                            $('#airportTable').DataTable().destroy();
+                        }
+                        $('#airportTable').DataTable({
+                            pageLength: 10,
+                            order: [[2, 'desc']],
+                            searching: true
+                        });
+                        console.log('Airport table DataTable reinitialized successfully after error');
+                    } catch (retryError) {
+                        console.error('Airport table DataTable reinitialization failed:', retryError);
+                    }
+                }
+            } else {
+                console.log('Table #airportTable not found');
+            }
+        }, 100); // Small delay to ensure DOM is fully loaded
+    });
+
+    // Additional safety: Clean up on page unload
+    $(window).on('beforeunload', function() {
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#airportTable')) {
+            try {
+                $('#airportTable').DataTable().destroy();
+                console.log('Airport table DataTable destroyed on page unload');
+            } catch (e) {
+                console.log('Error destroying DataTable:', e);
+            }
+        }
+    });
+
+    // Handle tab changes to ensure DataTable remains functional
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#airportTable')) {
+            // Adjust DataTable columns if needed when tab changes
+            $('#airportTable').DataTable().columns.adjust().draw();
+        }
+    });
+</script>
+
+<!-- Fallback for browsers with slow loading or JavaScript issues -->
+<noscript>
+    <style>
+        #airportTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #airportTable th, #airportTable td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        #airportTable tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        #airportTable th {
+            background-color: #343a40;
+            color: white;
+        }
+    </style>
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        JavaScript is disabled. Table features like sorting and searching are limited.
+    </div>
+</noscript>
+{% endblock %}
+{% endblock %}

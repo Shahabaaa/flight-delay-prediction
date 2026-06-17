@@ -1,0 +1,45 @@
+{% extends 'Airline operator/homeindex.html' %}
+{% block body %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+
+<div class="container">
+<h2>Flight Landing / Departure Time</h2>
+
+<form method="post">
+{% csrf_token %}
+
+
+
+<div class="row mb-3">
+<label class="col-sm-4">Arrival Time</label>
+<div class="col-sm-8">
+<input type="time" name="arrival" class="form-control"
+value="{{ data.arrivaltime|default:'' }}">
+</div>
+</div>
+
+<div class="row mb-3">
+<label class="col-sm-4">Departure Time</label>
+<div class="col-sm-8">
+<input type="time" name="depart" class="form-control"
+value="{{ data.departtime|default:'' }}">
+</div>
+</div>
+
+<div class="row mb-3">
+<div class="offset-sm-4 col-sm-8">
+
+{% if data %}
+<button type="submit" class="btn btn-warning">Update</button>
+{% else %}
+<button type="submit" class="btn btn-primary">Add</button>
+{% endif %}
+
+</div>
+</div>
+
+</form>
+
+</div>
+
+{% endblock %}

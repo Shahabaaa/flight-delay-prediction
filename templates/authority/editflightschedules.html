@@ -1,0 +1,72 @@
+{% extends 'authority/homeindex.html' %}
+{% block body %}
+
+<div class="container">
+  <h2 class="mb-4">EDIT FLIGHT SCHEDULE</h2>
+
+  <form method="post" action="/myapp/edit_flight_schedule_post/">
+    {% csrf_token %}
+
+    <!-- Hidden ID -->
+    <input type="hidden" name="id" value="{{ data.id }}">
+
+    <!-- Flight -->
+    <div class="row mb-3">
+      <label class="col-sm-4">Flight</label>
+      <div class="col-sm-8">
+        <select class="form-control" name="flight_id" required>
+          {% for f in flights %}
+          <option value="{{ f.id }}"
+            {% if data.FLIGHT.id == f.id %} selected {% endif %}>
+            {{ f.Flight_Name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Flight Date -->
+    <div class="row mb-3">
+      <label class="col-sm-4">Flight Date</label>
+      <div class="col-sm-8">
+        <input type="date" class="form-control"
+               name="flight_date"
+               value="{{ data.Flight_Date | date:'Y-m-d' }}"
+               required>
+      </div>
+    </div>
+
+    <!-- Scheduled Departure -->
+    <div class="row mb-3">
+      <label class="col-sm-4">Scheduled Departure</label>
+      <div class="col-sm-8">
+        <input type="time" class="form-control"
+               name="scheduled_departure"
+               value="{{ data.Scheduled_Departure }}"
+               required>
+      </div>
+    </div>
+
+    <!-- Scheduled Arrival -->
+    <div class="row mb-3">
+      <label class="col-sm-4">Scheduled Arrival</label>
+      <div class="col-sm-8">
+        <input type="time" class="form-control"
+               name="scheduled_arrival"
+               value="{{ data.Scheduled_Arrival }}"
+               required>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="row mb-3">
+      <div class="offset-sm-4 col-sm-8">
+        <button type="submit" class="btn btn-primary">Update</button>
+      </div>
+    </div>
+
+  </form>
+</div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+
+{% endblock %}

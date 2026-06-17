@@ -1,0 +1,62 @@
+{% extends 'authority/homeindex.html' %}
+{% block body %}
+
+<div class="container">
+  <h2 class="mb-4">ADD FLIGHT SCHEDULE</h2>
+
+  {% for i in messages %}
+    <div class="alert alert-info">{{ i }}</div>
+  {% endfor %}
+
+  <form method="post" action="/myapp/addflightshedule_post/">
+    {% csrf_token %}
+
+    <!-- Flight -->
+    <div class="row mb-3">
+      <label class="col-sm-4">Flight</label>
+      <div class="col-sm-8">
+        <select class="form-control" name="flight_id" required>
+          <option value="">Select Flight</option>
+          {% for f in flights %}
+          <option value="{{ f.id }}">{{ f.Flight_Name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Flight Date -->
+    <div class="row mb-3">
+      <label class="col-sm-4">Flight Date</label>
+      <div class="col-sm-8">
+        <input type="date" class="form-control" name="flight_date" required>
+      </div>
+    </div>
+
+    <!-- Scheduled Departure -->
+    <div class="row mb-3">
+      <label class="col-sm-4">Scheduled Departure</label>
+      <div class="col-sm-8">
+        <input type="time" class="form-control" name="scheduled_departure" required>
+      </div>
+    </div>
+
+    <!-- Scheduled Arrival -->
+    <div class="row mb-3">
+      <label class="col-sm-4">Scheduled Arrival</label>
+      <div class="col-sm-8">
+        <input type="time" class="form-control" name="scheduled_arrival" required>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="row mb-3">
+      <div class="offset-sm-4 col-sm-8">
+        <button type="submit" class="btn btn-primary">Add Schedule</button>
+      </div>
+    </div>
+
+  </form>
+</div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+
+{% endblock %}
